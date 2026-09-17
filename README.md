@@ -13,6 +13,15 @@ Sistema de agendamento de tarefas em Java 21 e Spring Boot, organizado em quatro
 
 O [Compose](compose.yaml) inicia os quatro serviços, PostgreSQL e MongoDB. Apenas a porta do BFF é publicada no host. Os outros serviços e bancos se comunicam pela rede interna do Compose.
 
+## Histórico dos serviços
+
+Este repositório reúne os quatro projetos que antes eram mantidos separadamente. Ele foi iniciado a partir dos arquivos consolidados, por isso não contém os commits anteriores de cada serviço. O histórico original pode ser consultado nos repositórios individuais:
+
+- API de Usuários: [guifelipem/usuario](https://github.com/guifelipem/usuario)
+- API de Agendamento de Tarefas: [guifelipem/agendador-tarefas](https://github.com/guifelipem/agendador-tarefas)
+- Serviço de Notificação: [guifelipem/notificacao](https://github.com/guifelipem/notificacao)
+- BFF (Backend for Frontend): [guifelipem/bff-agendador-tarefas](https://github.com/guifelipem/bff-agendador-tarefas)
+
 ## Requisitos
 
 - Docker com o plugin Docker Compose.
