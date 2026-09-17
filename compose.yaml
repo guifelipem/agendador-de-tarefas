@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: db_usuario
+      POSTGRES_USER: agendador
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agendador -d db_usuario"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: agendador
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Defina MONGO_PASSWORD no .env}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --username agendador --password \"$$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  usuario:
+    build: ./services/usuario
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/db_usuario
+      SPRING_DATASOURCE_USERNAME: agendador
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+      JWT_SECRET_BASE64: ${JWT_SECRET_BASE64:?Defina JWT_SECRET_BASE64 no .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tarefas:
+    build: ./services/tarefas
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://agendador:${MONGO_PASSWORD:?Defina MONGO_PASSWORD no .env}@mongo:27017/db_agendador?authSource=admin
+      USUARIO_URL: http://usuario:8080
+      JWT_SECRET_BASE64: ${JWT_SECRET_BASE64:?Defina JWT_SECRET_BASE64 no .env}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      usuario:
+        condition: service_started
+    restart: unless-stopped
+
+  notificacao:
+    build: ./services/notificacao
+    environment:
+      SMTP_HOST: ${SMTP_HOST:?Defina SMTP_HOST no .env}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:?Defina SMTP_USERNAME no .env}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Defina SMTP_PASSWORD no .env}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE:?Defina EMAIL_REMETENTE no .env}
+      EMAIL_NOME_REMETENTE: ${EMAIL_NOME_REMETENTE:-Agendador de Tarefas}
+    restart: unless-stopped
+
+  bff:
+    build: ./services/bff
+    ports:
+      - "${BFF_PORT:-8083}:8083"
+    environment:
+      USUARIO_URL: http://usuario:8080/usuario
+      TAREFAS_URL: http://tarefas:8081/tarefas
+      NOTIFICACAO_URL: http://notificacao:8082/email
+      CRON_USUARIO_EMAIL: ${CRON_USUARIO_EMAIL:?Defina CRON_USUARIO_EMAIL no .env}
+      CRON_USUARIO_SENHA: ${CRON_USUARIO_SENHA:?Defina CRON_USUARIO_SENHA no .env}
+      CRON_HORARIO: ${CRON_HORARIO:-0 0/1 * * * ?}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4200}
+    depends_on:
+      usuario:
+        condition: service_started
+      tarefas:
+        condition: service_started
+      notificacao:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongo_data:

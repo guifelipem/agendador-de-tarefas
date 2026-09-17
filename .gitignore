@@ -1,0 +1,46 @@
+# Variaveis de ambiente e segredos locais
+.env
+.env.*
+!.env.example
+.envrc
+secrets/
+**/secrets/
+*.pem
+*.key
+*.p12
+*.jks
+**/src/main/resources/application-local.properties
+**/src/main/resources/application-local.yml
+**/src/main/resources/application-local.yaml
+
+# Saidas de build e caches
+**/build/
+**/target/
+**/out/
+**/bin/
+**/.gradle/
+**/.gradle-home/
+**/.mvn/timing.properties
+
+# IDEs e ferramentas de desenvolvimento
+**/.idea/
+**/.vscode/
+**/.settings/
+**/.apt_generated/
+**/.sts4-cache/
+**/.classpath
+**/.factorypath
+**/.project
+**/*.iml
+**/*.ipr
+**/*.iws
+
+# Arquivos temporarios e do sistema
+*.log
+*.tmp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+docker-compose.override.yml
+compose.override.yaml
